@@ -365,16 +365,18 @@ stFileUploader { background: transparent; }
 """, unsafe_allow_html=True)
 
 # ── PLOTLY HELPERS ────────────────────────────────────────────────
-# Keep only global, non-axis keys here — never put xaxis/yaxis dicts
-# or xaxis_title/yaxis_title kwargs inside this dict.
+# Plotly 6.x breaking changes vs older versions:
+#   1. 'transparent' is NOT a valid color — use 'rgba(0,0,0,0)'
+#   2. Never put margin here — per-chart margin override must use a
+#      separate update_layout() call to avoid duplicate kwarg error
+#   3. Always style axes via update_xaxes() / update_yaxes(), never
+#      inside the update_layout() dict
 PLOTLY_LAYOUT = dict(
     plot_bgcolor='#111',
     paper_bgcolor='#111',
     font=dict(family='JetBrains Mono, monospace', size=11, color='#666'),
-    margin=dict(l=50, r=20, t=40, b=50),
 )
 
-# Reusable axis style — always applied via update_xaxes / update_yaxes
 AXIS_STYLE = dict(
     showgrid=True,
     gridcolor='#1A1A1A',
@@ -382,6 +384,13 @@ AXIS_STYLE = dict(
     tickcolor='#333',
     zeroline=False,
 )
+
+LEGEND_STYLE = dict(
+    bgcolor='rgba(0,0,0,0)',  # 'transparent' breaks Plotly 6.x
+    font=dict(color='#555'),
+)
+
+DEFAULT_MARGIN = dict(l=50, r=20, t=40, b=50)
 
 
 # ── ARTIFACT LOADING ──────────────────────────────────────────────
@@ -673,11 +682,11 @@ elif nav == "Statistical Validation":
 
     c1, c2, c3, c4, c5 = st.columns(5)
     metrics = [
-        ("AUC-ROC",     f"{config['bootstrap_auc']['mean']:.4f}", f"CI [{config['bootstrap_auc']['ci_lower']:.3f}, {config['bootstrap_auc']['ci_upper']:.3f}]"),
-        ("Sensitivity", f"{config['sensitivity']:.4f}",           "True Positive Rate"),
-        ("Specificity", f"{config['specificity']:.4f}",           "True Negative Rate"),
-        ("Brier Score", f"{config['brier_score']:.4f}",           "Calibration quality"),
-        ("Youden Index",f"{config['youden_index']:.4f}",          f"Threshold {config['optimal_threshold']:.4f}"),
+        ("AUC-ROC",      f"{config['bootstrap_auc']['mean']:.4f}", f"CI [{config['bootstrap_auc']['ci_lower']:.3f}, {config['bootstrap_auc']['ci_upper']:.3f}]"),
+        ("Sensitivity",  f"{config['sensitivity']:.4f}",           "True Positive Rate"),
+        ("Specificity",  f"{config['specificity']:.4f}",           "True Negative Rate"),
+        ("Brier Score",  f"{config['brier_score']:.4f}",           "Calibration quality"),
+        ("Youden Index", f"{config['youden_index']:.4f}",          f"Threshold {config['optimal_threshold']:.4f}"),
     ]
     for col, (label, val, sub) in zip([c1, c2, c3, c4, c5], metrics):
         with col:
@@ -693,7 +702,7 @@ elif nav == "Statistical Validation":
 
     col_l, col_r = st.columns(2, gap="large")
 
-    # ── ROC Curve ────────────────────────────────────────────────
+    # ── ROC Curve ─────────────────────────────────────────────────
     with col_l:
         st.markdown('<div class="section-eyebrow">ROC Curve — Bootstrapped 95% CI</div>', unsafe_allow_html=True)
         if roc_df is not None:
@@ -713,16 +722,14 @@ elif nav == "Statistical Validation":
                 mode='markers', name='Youden Point',
                 marker=dict(color='#F87171', size=10, symbol='circle')
             ))
-            fig_roc.update_layout(
-                **PLOTLY_LAYOUT,
-                height=340,
-                legend=dict(bgcolor='transparent', font=dict(color='#555')),
-            )
+            # Two-step: base props first, then margin separately
+            fig_roc.update_layout(**PLOTLY_LAYOUT, height=340, legend=LEGEND_STYLE)
+            fig_roc.update_layout(margin=DEFAULT_MARGIN)
             fig_roc.update_xaxes(**AXIS_STYLE, title_text='False Positive Rate')
             fig_roc.update_yaxes(**AXIS_STYLE, title_text='True Positive Rate')
             st.plotly_chart(fig_roc, use_container_width=True)
 
-    # ── Calibration Curve ────────────────────────────────────────
+    # ── Calibration Curve ─────────────────────────────────────────
     with col_r:
         st.markdown('<div class="section-eyebrow">Calibration Curve — Brier Score Analysis</div>', unsafe_allow_html=True)
         if cal_df is not None:
@@ -739,11 +746,8 @@ elif nav == "Statistical Validation":
                 line=dict(color='#C8FF00', width=2),
                 marker=dict(color='#E8E4DC', size=7)
             ))
-            fig_cal.update_layout(
-                **PLOTLY_LAYOUT,
-                height=340,
-                legend=dict(bgcolor='transparent', font=dict(color='#555')),
-            )
+            fig_cal.update_layout(**PLOTLY_LAYOUT, height=340, legend=LEGEND_STYLE)
+            fig_cal.update_layout(margin=DEFAULT_MARGIN)
             fig_cal.update_xaxes(**AXIS_STYLE, title_text='Mean Predicted Probability')
             fig_cal.update_yaxes(**AXIS_STYLE, title_text='Fraction of Positives')
             st.plotly_chart(fig_cal, use_container_width=True)
@@ -751,7 +755,7 @@ elif nav == "Statistical Validation":
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     col_a, col_b, col_c = st.columns(3, gap="large")
 
-    # ── AUC per Quality Tier ─────────────────────────────────────
+    # ── AUC per Quality Tier ──────────────────────────────────────
     with col_a:
         st.markdown('<div class="section-eyebrow">AUC per Quality Tier</div>', unsafe_allow_html=True)
         if config.get('tier_auc'):
@@ -767,11 +771,12 @@ elif nav == "Statistical Validation":
                 width=0.4
             ))
             fig_tier.update_layout(**PLOTLY_LAYOUT, height=280)
+            fig_tier.update_layout(margin=DEFAULT_MARGIN)
             fig_tier.update_xaxes(**AXIS_STYLE)
             fig_tier.update_yaxes(**AXIS_STYLE, range=[0.4, 1.0])
             st.plotly_chart(fig_tier, use_container_width=True)
 
-    # ── Spearman ─────────────────────────────────────────────────
+    # ── Spearman ──────────────────────────────────────────────────
     with col_b:
         st.markdown('<div class="section-eyebrow">Spearman Correlation</div>', unsafe_allow_html=True)
         rho   = config['spearman_rho']
@@ -795,7 +800,7 @@ elif nav == "Statistical Validation":
         </div>
         """, unsafe_allow_html=True)
 
-    # ── McNemar ──────────────────────────────────────────────────
+    # ── McNemar ───────────────────────────────────────────────────
     with col_c:
         st.markdown('<div class="section-eyebrow">McNemar Test</div>', unsafe_allow_html=True)
         mc_p          = config['mcnemar_pvalue']
@@ -859,10 +864,12 @@ elif nav == "Error Analysis":
         st.error("Artefak tidak ditemukan.")
         st.stop()
 
-    cm            = config['confusion_matrix']
-    tp, tn        = cm['tp'], cm['tn']
-    fp, fn        = cm['fp'], cm['fn']
-    total         = tp + tn + fp + fn
+    cm    = config['confusion_matrix']
+    tp    = cm['tp']
+    tn    = cm['tn']
+    fp    = cm['fp']
+    fn    = cm['fn']
+    total = tp + tn + fp + fn
 
     c1, c2, c3, c4 = st.columns(4)
     for col, label, val, color in zip(
@@ -901,6 +908,7 @@ elif nav == "Error Analysis":
             width=0.45
         ))
         fig_flag.update_layout(**PLOTLY_LAYOUT, height=320)
+        fig_flag.update_layout(margin=DEFAULT_MARGIN)
         fig_flag.update_xaxes(**AXIS_STYLE)
         fig_flag.update_yaxes(**AXIS_STYLE, range=[0, 100], title_text='% Diflag (uncertainty >= 0.20)')
         st.plotly_chart(fig_flag, use_container_width=True)
@@ -926,11 +934,9 @@ elif nav == "Error Analysis":
             colorscale=[[0, '#111'], [1, '#1A3A1A']],
             showscale=False
         ))
-        fig_cm.update_layout(
-            **PLOTLY_LAYOUT,
-            height=320,
-            margin=dict(l=80, r=20, t=20, b=80),
-        )
+        # Confusion matrix uses a custom margin — apply in a separate call
+        fig_cm.update_layout(**PLOTLY_LAYOUT, height=320)
+        fig_cm.update_layout(margin=dict(l=80, r=20, t=20, b=80))
         fig_cm.update_xaxes(**AXIS_STYLE)
         fig_cm.update_yaxes(**AXIS_STYLE)
         st.plotly_chart(fig_cm, use_container_width=True)
