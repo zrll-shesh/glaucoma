@@ -354,7 +354,7 @@ html, body, [class*="css"] {
 
 stFileUploader { background: transparent; }
 
-.stSlider label { 
+.stSlider label {
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 0.65rem !important;
     color: #444 !important;
@@ -364,16 +364,27 @@ stFileUploader { background: transparent; }
 </style>
 """, unsafe_allow_html=True)
 
+# ── PLOTLY HELPERS ────────────────────────────────────────────────
+# Keep only global, non-axis keys here — never put xaxis/yaxis dicts
+# or xaxis_title/yaxis_title kwargs inside this dict.
 PLOTLY_LAYOUT = dict(
     plot_bgcolor='#111',
     paper_bgcolor='#111',
     font=dict(family='JetBrains Mono, monospace', size=11, color='#666'),
     margin=dict(l=50, r=20, t=40, b=50),
-    xaxis=dict(showgrid=True, gridcolor='#1A1A1A', linecolor='#222', tickcolor='#333', zeroline=False),
-    yaxis=dict(showgrid=True, gridcolor='#1A1A1A', linecolor='#222', tickcolor='#333', zeroline=False),
+)
+
+# Reusable axis style — always applied via update_xaxes / update_yaxes
+AXIS_STYLE = dict(
+    showgrid=True,
+    gridcolor='#1A1A1A',
+    linecolor='#222',
+    tickcolor='#333',
+    zeroline=False,
 )
 
 
+# ── ARTIFACT LOADING ──────────────────────────────────────────────
 @st.cache_resource
 def load_artifacts():
     base = "glaucostat_artifacts"
@@ -383,24 +394,25 @@ def load_artifacts():
         return None, None, None, None
     with open(config_path) as f:
         config = json.load(f)
-    model   = keras.models.load_model(model_path)
-    roc_df  = pd.read_csv(os.path.join(base, "roc_data.csv"))
-    cal_df  = pd.read_csv(os.path.join(base, "calibration_data.csv"))
+    model  = keras.models.load_model(model_path)
+    roc_df = pd.read_csv(os.path.join(base, "roc_data.csv"))
+    cal_df = pd.read_csv(os.path.join(base, "calibration_data.csv"))
     return model, config, roc_df, cal_df
 
 
+# ── IMAGE HELPERS ─────────────────────────────────────────────────
 def preprocess_image(image_bytes, img_size=224):
     nparr = np.frombuffer(image_bytes, np.uint8)
     img   = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img is None:
         pil = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         img = np.array(pil)[:, :, ::-1]
-    img_rgb      = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_resized  = cv2.resize(img_rgb, (img_size, img_size))
-    img_norm     = img_resized.astype(np.float32) / 255.0
-    mean         = np.array([0.485, 0.456, 0.406])
-    std          = np.array([0.229, 0.224, 0.225])
-    img_pre      = (img_norm - mean) / std
+    img_rgb     = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    img_resized = cv2.resize(img_rgb, (img_size, img_size))
+    img_norm    = img_resized.astype(np.float32) / 255.0
+    mean        = np.array([0.485, 0.456, 0.406])
+    std         = np.array([0.229, 0.224, 0.225])
+    img_pre     = (img_norm - mean) / std
     return img_pre, img_norm, img_rgb
 
 
@@ -411,8 +423,10 @@ def compute_gradcam(model, img_array, qs_array, conv_layer='top_conv'):
             outputs=[model.get_layer(conv_layer).output, model.output]
         )
         with tf.GradientTape() as tape:
-            inputs = {'image_input': tf.cast(img_array, tf.float32),
-                      'quality_input': tf.cast(qs_array, tf.float32)}
+            inputs = {
+                'image_input':   tf.cast(img_array, tf.float32),
+                'quality_input': tf.cast(qs_array,  tf.float32),
+            }
             conv_out, preds = grad_model(inputs)
             loss = preds[:, 0]
         grads        = tape.gradient(loss, conv_out)
@@ -426,24 +440,27 @@ def compute_gradcam(model, img_array, qs_array, conv_layer='top_conv'):
 
 
 def overlay_gradcam(img_norm, heatmap, alpha=0.45):
-    h = cv2.resize(heatmap, (img_norm.shape[1], img_norm.shape[0]))
-    h = cv2.applyColorMap(np.uint8(255 * h), cv2.COLORMAP_INFERNO)
-    h = cv2.cvtColor(h, cv2.COLOR_BGR2RGB)
+    h    = cv2.resize(heatmap, (img_norm.shape[1], img_norm.shape[0]))
+    h    = cv2.applyColorMap(np.uint8(255 * h), cv2.COLORMAP_INFERNO)
+    h    = cv2.cvtColor(h, cv2.COLOR_BGR2RGB)
     base = np.uint8(255 * np.clip(img_norm, 0, 1))
     return cv2.addWeighted(base, 1 - alpha, h, alpha, 0)
 
 
 def get_quality_info(qs):
     if qs >= 5.0:
-        return 'HIGH', '#4ADE80', 'quality-pill-high', 'Kualitas gambar baik — analisis dapat dipercaya.'
+        return 'HIGH',   '#4ADE80', 'quality-pill-high',   'Kualitas gambar baik — analisis dapat dipercaya.'
     elif qs >= 3.0:
         return 'MEDIUM', '#FACC15', 'quality-pill-medium', 'Kualitas gambar sedang — hasil mungkin sedikit kurang akurat.'
     else:
-        return 'LOW', '#F87171', 'quality-pill-low', 'Kualitas gambar rendah — disarankan mengulang foto fundus.'
+        return 'LOW',    '#F87171', 'quality-pill-low',    'Kualitas gambar rendah — disarankan mengulang foto fundus.'
 
 
+# ── LOAD ARTIFACTS ────────────────────────────────────────────────
 model, config, roc_df, cal_df = load_artifacts()
 
+
+# ── SIDEBAR ───────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
     <div style="padding: 1.5rem 0 1rem;">
@@ -518,7 +535,7 @@ if nav == "Detection":
         image_bytes = uploaded.read()
         img_pre, img_norm, img_rgb = preprocess_image(image_bytes, config['img_size'])
 
-        qs     = quality_score
+        qs      = quality_score
         qs_norm = (qs - config['qs_mean']) / config['qs_std']
         img_batch = np.expand_dims(img_pre, 0)
         qs_batch  = np.array([[qs_norm]])
@@ -656,11 +673,11 @@ elif nav == "Statistical Validation":
 
     c1, c2, c3, c4, c5 = st.columns(5)
     metrics = [
-        ("AUC-ROC", f"{config['bootstrap_auc']['mean']:.4f}", f"CI [{config['bootstrap_auc']['ci_lower']:.3f}, {config['bootstrap_auc']['ci_upper']:.3f}]"),
-        ("Sensitivity", f"{config['sensitivity']:.4f}", "True Positive Rate"),
-        ("Specificity", f"{config['specificity']:.4f}", "True Negative Rate"),
-        ("Brier Score", f"{config['brier_score']:.4f}", "Calibration quality"),
-        ("Youden Index", f"{config['youden_index']:.4f}", f"Threshold {config['optimal_threshold']:.4f}"),
+        ("AUC-ROC",     f"{config['bootstrap_auc']['mean']:.4f}", f"CI [{config['bootstrap_auc']['ci_lower']:.3f}, {config['bootstrap_auc']['ci_upper']:.3f}]"),
+        ("Sensitivity", f"{config['sensitivity']:.4f}",           "True Positive Rate"),
+        ("Specificity", f"{config['specificity']:.4f}",           "True Negative Rate"),
+        ("Brier Score", f"{config['brier_score']:.4f}",           "Calibration quality"),
+        ("Youden Index",f"{config['youden_index']:.4f}",          f"Threshold {config['optimal_threshold']:.4f}"),
     ]
     for col, (label, val, sub) in zip([c1, c2, c3, c4, c5], metrics):
         with col:
@@ -676,6 +693,7 @@ elif nav == "Statistical Validation":
 
     col_l, col_r = st.columns(2, gap="large")
 
+    # ── ROC Curve ────────────────────────────────────────────────
     with col_l:
         st.markdown('<div class="section-eyebrow">ROC Curve — Bootstrapped 95% CI</div>', unsafe_allow_html=True)
         if roc_df is not None:
@@ -697,13 +715,14 @@ elif nav == "Statistical Validation":
             ))
             fig_roc.update_layout(
                 **PLOTLY_LAYOUT,
-                xaxis_title='False Positive Rate',
-                yaxis_title='True Positive Rate',
+                height=340,
                 legend=dict(bgcolor='transparent', font=dict(color='#555')),
-                height=340
             )
+            fig_roc.update_xaxes(**AXIS_STYLE, title_text='False Positive Rate')
+            fig_roc.update_yaxes(**AXIS_STYLE, title_text='True Positive Rate')
             st.plotly_chart(fig_roc, use_container_width=True)
 
+    # ── Calibration Curve ────────────────────────────────────────
     with col_r:
         st.markdown('<div class="section-eyebrow">Calibration Curve — Brier Score Analysis</div>', unsafe_allow_html=True)
         if cal_df is not None:
@@ -715,22 +734,24 @@ elif nav == "Statistical Validation":
             ))
             fig_cal.add_trace(go.Scatter(
                 x=cal_df['mean_pred'], y=cal_df['fraction_pos'],
-                mode='lines+markers', name=f"GlaucoStat (Brier={config['brier_score']:.4f})",
+                mode='lines+markers',
+                name=f"GlaucoStat (Brier={config['brier_score']:.4f})",
                 line=dict(color='#C8FF00', width=2),
                 marker=dict(color='#E8E4DC', size=7)
             ))
             fig_cal.update_layout(
                 **PLOTLY_LAYOUT,
-                xaxis_title='Mean Predicted Probability',
-                yaxis_title='Fraction of Positives',
+                height=340,
                 legend=dict(bgcolor='transparent', font=dict(color='#555')),
-                height=340
             )
+            fig_cal.update_xaxes(**AXIS_STYLE, title_text='Mean Predicted Probability')
+            fig_cal.update_yaxes(**AXIS_STYLE, title_text='Fraction of Positives')
             st.plotly_chart(fig_cal, use_container_width=True)
 
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     col_a, col_b, col_c = st.columns(3, gap="large")
 
+    # ── AUC per Quality Tier ─────────────────────────────────────
     with col_a:
         st.markdown('<div class="section-eyebrow">AUC per Quality Tier</div>', unsafe_allow_html=True)
         if config.get('tier_auc'):
@@ -745,18 +766,17 @@ elif nav == "Statistical Validation":
                 textfont=dict(color='#E8E4DC', family='JetBrains Mono'),
                 width=0.4
             ))
-            fig_tier.update_layout(
-                **PLOTLY_LAYOUT,
-                yaxis=dict(range=[0.4, 1.0], showgrid=True, gridcolor='#1A1A1A'),
-                height=280
-            )
+            fig_tier.update_layout(**PLOTLY_LAYOUT, height=280)
+            fig_tier.update_xaxes(**AXIS_STYLE)
+            fig_tier.update_yaxes(**AXIS_STYLE, range=[0.4, 1.0])
             st.plotly_chart(fig_tier, use_container_width=True)
 
+    # ── Spearman ─────────────────────────────────────────────────
     with col_b:
         st.markdown('<div class="section-eyebrow">Spearman Correlation</div>', unsafe_allow_html=True)
-        rho    = config['spearman_rho']
-        p_val  = config['spearman_p']
-        sig    = p_val < 0.05
+        rho   = config['spearman_rho']
+        p_val = config['spearman_p']
+        sig   = p_val < 0.05
         st.markdown(f"""
         <div class="stat-highlight" style="margin-top:0;">
             <div class="stat-highlight-val">{rho:.4f}</div>
@@ -775,13 +795,14 @@ elif nav == "Statistical Validation":
         </div>
         """, unsafe_allow_html=True)
 
+    # ── McNemar ──────────────────────────────────────────────────
     with col_c:
         st.markdown('<div class="section-eyebrow">McNemar Test</div>', unsafe_allow_html=True)
-        mc_p   = config['mcnemar_pvalue']
-        mc_sig = mc_p < 0.05
+        mc_p          = config['mcnemar_pvalue']
+        mc_sig        = mc_p < 0.05
         tier_auc_vals = config.get('tier_auc', {})
-        high_auc   = tier_auc_vals.get('High (>5)', 0)
-        medium_auc = tier_auc_vals.get('Medium (3-5)', 0)
+        high_auc      = tier_auc_vals.get('High (>5)',    0)
+        medium_auc    = tier_auc_vals.get('Medium (3-5)', 0)
         st.markdown(f"""
         <div class="stat-highlight" style="margin-top:0;">
             <div class="stat-highlight-val" style="color:{'#4ADE80' if mc_sig else '#F87171'};">
@@ -813,8 +834,8 @@ elif nav == "Statistical Validation":
             use_container_width=True,
             hide_index=True,
             column_config={
-                "Metrik"      : st.column_config.TextColumn("Metric", width="medium"),
-                "Nilai"       : st.column_config.TextColumn("Value", width="small"),
+                "Metrik"      : st.column_config.TextColumn("Metric",         width="medium"),
+                "Nilai"       : st.column_config.TextColumn("Value",          width="small"),
                 "Interpretasi": st.column_config.TextColumn("Interpretation", width="large"),
             }
         )
@@ -838,10 +859,10 @@ elif nav == "Error Analysis":
         st.error("Artefak tidak ditemukan.")
         st.stop()
 
-    cm     = config['confusion_matrix']
-    tp, tn = cm['tp'], cm['tn']
-    fp, fn = cm['fp'], cm['fn']
-    total  = tp + tn + fp + fn
+    cm            = config['confusion_matrix']
+    tp, tn        = cm['tp'], cm['tn']
+    fp, fn        = cm['fp'], cm['fn']
+    total         = tp + tn + fp + fn
 
     c1, c2, c3, c4 = st.columns(4)
     for col, label, val, color in zip(
@@ -863,10 +884,11 @@ elif nav == "Error Analysis":
 
     col_l, col_r = st.columns(2, gap="large")
 
+    # ── MC Dropout Flag Rate ──────────────────────────────────────
     with col_l:
         st.markdown('<div class="section-eyebrow">MC Dropout Flag Rate per Error Type</div>', unsafe_allow_html=True)
-        fn_flag = config['fn_flag_rate'] * 100
-        fp_flag = 50.0
+        fn_flag  = config['fn_flag_rate'] * 100
+        fp_flag  = 50.0
         cor_flag = 47.5
 
         fig_flag = go.Figure(go.Bar(
@@ -878,11 +900,9 @@ elif nav == "Error Analysis":
             textfont=dict(color='#E8E4DC', family='JetBrains Mono'),
             width=0.45
         ))
-        fig_flag.update_layout(
-            **PLOTLY_LAYOUT,
-            yaxis=dict(range=[0, 100], showgrid=True, gridcolor='#1A1A1A', title='% Diflag (uncertainty >= 0.20)'),
-            height=320
-        )
+        fig_flag.update_layout(**PLOTLY_LAYOUT, height=320)
+        fig_flag.update_xaxes(**AXIS_STYLE)
+        fig_flag.update_yaxes(**AXIS_STYLE, range=[0, 100], title_text='% Diflag (uncertainty >= 0.20)')
         st.plotly_chart(fig_flag, use_container_width=True)
 
         st.markdown(f"""
@@ -893,13 +913,13 @@ elif nav == "Error Analysis":
         </div>
         """, unsafe_allow_html=True)
 
+    # ── Confusion Matrix ──────────────────────────────────────────
     with col_r:
         st.markdown('<div class="section-eyebrow">Confusion Matrix Heatmap</div>', unsafe_allow_html=True)
-
         fig_cm = go.Figure(go.Heatmap(
             z=[[tn, fp], [fn, tp]],
             x=['Predicted GON-', 'Predicted GON+'],
-            y=['True GON-', 'True GON+'],
+            y=['True GON-',      'True GON+'],
             text=[[str(tn), str(fp)], [str(fn), str(tp)]],
             texttemplate='%{text}',
             textfont=dict(size=20, color='#E8E4DC', family='Instrument Serif'),
@@ -909,8 +929,10 @@ elif nav == "Error Analysis":
         fig_cm.update_layout(
             **PLOTLY_LAYOUT,
             height=320,
-            margin=dict(l=80, r=20, t=20, b=80)
+            margin=dict(l=80, r=20, t=20, b=80),
         )
+        fig_cm.update_xaxes(**AXIS_STYLE)
+        fig_cm.update_yaxes(**AXIS_STYLE)
         st.plotly_chart(fig_cm, use_container_width=True)
 
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
