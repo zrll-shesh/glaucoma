@@ -1,0 +1,40 @@
+{
+  "model_name": "GlaucoStat",
+  "backbone": "EfficientNetB0",
+  "img_size": 224,
+  "qs_mean": 5.931528013582343,
+  "qs_std": 0.9899586200276081,
+  "optimal_threshold": 0.6021984815597534,
+  "conv_layer": "top_conv",
+  "bootstrap_auc": {
+    "mean": 0.8100268263721911,
+    "ci_lower": 0.7343099839872896,
+    "ci_upper": 0.8825152304505383,
+    "se": 0.03932772403543193
+  },
+  "sensitivity": 0.78,
+  "specificity": 0.8076923076923077,
+  "youden_index": 0.5876923076923077,
+  "brier_score": 0.1911067973280525,
+  "average_precision": 0.8628759516584531,
+  "spearman_rho": -0.1954655586579448,
+  "spearman_p": 0.015809056256820653,
+  "tier_auc": {
+    "Medium (3-5)": 0.5833333333333333,
+    "High (>5)": 0.8448529411764706
+  },
+  "mcnemar_pvalue": 0.0007829382178911184,
+  "mc_uncertainty_mean": 0.2013319730758667,
+  "fn_flag_rate": 0.6363636363636364,
+  "confusion_matrix": {
+    "tp": 78,
+    "tn": 42,
+    "fp": 10,
+    "fn": 22
+  },
+  "n_train": 586,
+  "n_test": 152,
+  "ppv": 0.8863636363636364,
+  "npv": 0.65625,
+  "f1_gon_pos": 0.8297872340425532
+}

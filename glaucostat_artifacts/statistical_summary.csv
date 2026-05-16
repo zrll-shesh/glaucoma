@@ -1,0 +1,25 @@
+Metrik,Nilai,Interpretasi
+Bootstrapped AUC (1000 iter),0.8100,Discriminative power keseluruhan
+95% Confidence Interval,"[0.7343, 0.8825]",Interval kepercayaan 95% via bootstrap
+Standard Error AUC,0.0393,Variabilitas estimasi AUC
+Optimal Threshold (Youden),0.6022,Optimized via Youden Index untuk skrining
+Youden Index,0.5877,Sensitivity + Specificity - 1
+Sensitivity (Recall GON+),0.7800,Proporsi glaukoma terdeteksi dengan benar
+Specificity,0.8077,Proporsi normal terklasifikasi benar
+Precision / PPV (GON+),0.8864,Ketepatan prediksi positif
+NPV (GON-),0.6562,Ketepatan prediksi negatif
+F1-Score (GON+),0.8298,Harmonic mean precision & recall
+Brier Score,0.1911,Kalibrasi probabilitas (0=perfect)
+Average Precision (PR-AUC),0.8629,Area under Precision-Recall curve
+AUC High Quality Tier,0.8449,Performa pada gambar berkualitas tinggi
+AUC Medium Quality Tier,0.5833,Performa pada gambar berkualitas sedang
+McNemar Test p-value (High vs Medium),0.0008,Signifikan (< 0.05 = berbeda)
+Spearman rho (QS vs Confidence),-0.1955,Korelasi kualitas gambar vs keyakinan model
+Spearman p (QS vs Confidence),0.0158,Signifikan jika < 0.05
+MC Dropout Mean Uncertainty,0.2013,Rata-rata epistemic uncertainty
+MC Dropout FN Flag Rate (>= 0.20),14/22 (63.6%),Kasus kritis yang bisa diflag otomatis
+Total Test Samples,152,Total gambar evaluasi
+True Positive,78,Glaukoma terdeteksi benar
+True Negative,42,Normal terdeteksi benar
+False Positive,10,Normal salah diprediksi glaukoma
+False Negative,22,Glaukoma terlewat
