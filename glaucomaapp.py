@@ -458,11 +458,11 @@ def overlay_gradcam(img_norm, heatmap, alpha=0.45):
 
 def get_quality_info(qs):
     if qs >= 5.0:
-        return 'HIGH',   '#4ADE80', 'quality-pill-high',   'Kualitas gambar baik — analisis dapat dipercaya.'
+        return 'HIGH',   '#4ADE80', 'quality-pill-high',   'Kualitas gambar baik (analisis dapat dipercaya.)'
     elif qs >= 3.0:
-        return 'MEDIUM', '#FACC15', 'quality-pill-medium', 'Kualitas gambar sedang — hasil mungkin sedikit kurang akurat.'
+        return 'MEDIUM', '#FACC15', 'quality-pill-medium', 'Kualitas gambar sedang (hasil mungkin sedikit kurang akurat).'
     else:
-        return 'LOW',    '#F87171', 'quality-pill-low',    'Kualitas gambar rendah — disarankan mengulang foto fundus.'
+        return 'LOW',    '#F87171', 'quality-pill-low',    'Kualitas gambar rendah (disarankan mengulang foto fundus)'
 
 
 # ── LOAD ARTIFACTS ────────────────────────────────────────────────
@@ -1001,7 +1001,7 @@ elif nav == "About":
             About<br>GlaucoStat
         </div>
         <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#444; margin-top:0.5rem; letter-spacing:0.1em;">
-            Statistical Essay Competition — Satria Data 2025
+            Statistical Essay Competition Satria Data 2026 (Dibuat Oleh Tim Nazril Ravi Pratama)
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1059,7 +1059,7 @@ elif nav == "About":
             <tr><td>Source</td><td>PhysioNet v1.0.0</td></tr>
             <tr><td>DOI</td><td>10.13026/z0ak-km33</td></tr>
             <tr><td>Total Images</td><td>747 (548 GON+, 199 GON-)</td></tr>
-            <tr><td>Annotation</td><td>Gold-standard — VF + IOP + OCT + 1yr follow-up</td></tr>
+            <tr><td>Annotation</td><td>Gold-standard VF + IOP + OCT + 1yr follow-up</td></tr>
             <tr><td>Camera</td><td>TOPCON DRI OCT Triton, 45° FOV</td></tr>
             <tr><td>QS Method</td><td>FundusQ-Net (scale 1-10, mean 5.9 ± 1.0)</td></tr>
             <tr><td>Ethics</td><td>Helsinki Committee HYMC-0029-24</td></tr>
