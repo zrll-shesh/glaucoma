@@ -1662,11 +1662,11 @@ with st.sidebar:
         st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:#2A2A2A; line-height:2;">
-            DATASET — PhysioNet HYGD<br>
-            THRESHOLD — {config['optimal_threshold']:.4f} (Youden)<br>
-            TRAIN — {config['n_train']} images<br>
-            TEST — {config['n_test']} images<br>
-            GATE — QS &ge; 3.0
+            DATASET: PhysioNet HYGD<br>
+            THRESHOLD: {config['optimal_threshold']:.4f} (Youden)<br>
+            TRAIN: {config['n_train']} images<br>
+            TEST: {config['n_test']} images<br>
+            GATE: QS &ge; 3.0
         </div>
         """, unsafe_allow_html=True)
 
@@ -1676,7 +1676,7 @@ if nav == "Detection":
     st.markdown("""
     <div style="padding: 1rem 0 2.5rem;">
         <div class="hero-wordmark">Glauco<span>Stat</span></div>
-        <div class="hero-tagline">Quality-Aware Multimodal Transfer Learning — Gold-Standard PhysioNet HYGD</div>
+        <div class="hero-tagline">Quality-Aware Multimodal Transfer Learning: Gold-Standard PhysioNet HYGD</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1778,7 +1778,7 @@ if nav == "Detection":
         sel = next((s for s in SAMPLE_IMAGES if s["id"] == st.session_state.selected_sample), None)
         if sel:
             image_bytes  = load_sample_bytes(sel["path"])
-            source_label = f"{sel['label']} — {sel['tag']} ({sel['path']})"
+            source_label = f"{sel['label']}, {sel['tag']} ({sel['path']})"
 
     # ── Run inference if image available ─────────────────────────
     if image_bytes:
@@ -1805,7 +1805,7 @@ if nav == "Detection":
             st.markdown(f"""
             <div style="font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:#444;
                         margin-bottom:1rem; letter-spacing:0.08em;">
-                SOURCE — {source_label}
+                SOURCE: {source_label}
             </div>
             """, unsafe_allow_html=True)
 
@@ -1814,7 +1814,7 @@ if nav == "Detection":
         col_img, col_res = st.columns([1.1, 1], gap="large")
 
         with col_img:
-            st.markdown('<div class="section-eyebrow">Fundus Image — Grad-CAM</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-eyebrow">Fundus Image: Grad-CAM</div>', unsafe_allow_html=True)
             tab1, tab2, tab3 = st.tabs(["ORIGINAL", "HEATMAP", "OVERLAY"])
             with tab1:
                 st.image(img_rgb, use_container_width=True)
@@ -1845,7 +1845,7 @@ if nav == "Detection":
                     <div class="result-diagnosis">Glaucomatous<br>Optic Neuropathy</div>
                     <div class="result-prob">{pred*100:.1f}%</div>
                     <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#F87171; letter-spacing:0.1em;">
-                        PROBABILITY — GON POSITIVE
+                        PROBABILITY: GON POSITIVE
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1855,7 +1855,7 @@ if nav == "Detection":
                     <div class="result-diagnosis">No Glaucoma<br>Detected</div>
                     <div class="result-prob">{(1-pred)*100:.1f}%</div>
                     <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#4ADE80; letter-spacing:0.1em;">
-                        PROBABILITY — GON NEGATIVE
+                        PROBABILITY: GON NEGATIVE
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1863,11 +1863,11 @@ if nav == "Detection":
             st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
 
             if qs < 3.0:
-                st.markdown(f'<div class="alert-box">QS {qs:.1f} — {qs_msg}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="alert-box">QS {qs:.1f}: {qs_msg}</div>', unsafe_allow_html=True)
             elif qs < 5.0:
-                st.markdown(f'<div class="warning-box">QS {qs:.1f} — {qs_msg}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="warning-box">QS {qs:.1f}: {qs_msg}</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f'<div class="ok-box">QS {qs:.1f} — {qs_msg}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="ok-box">QS {qs:.1f}: {qs_msg}</div>', unsafe_allow_html=True)
 
             st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
 
@@ -1906,7 +1906,7 @@ if nav == "Detection":
         st.markdown("""
         <div class="upload-zone">
             <div class="upload-zone-title">Drop fundus image here or pick a Quick Test sample above</div>
-            <div class="upload-zone-sub">JPG / PNG / BMP — Retinal fundus photograph</div>
+            <div class="upload-zone-sub">JPG / PNG / BMP: Retinal fundus photograph</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1952,7 +1952,7 @@ elif nav == "Statistical Validation":
     col_l, col_r = st.columns(2, gap="large")
 
     with col_l:
-        st.markdown('<div class="section-eyebrow">ROC Curve — Bootstrapped 95% CI</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-eyebrow">ROC Curve: Bootstrapped 95% CI</div>', unsafe_allow_html=True)
         if roc_df is not None:
             fig_roc = go.Figure()
             fig_roc.add_trace(go.Scatter(
@@ -1977,7 +1977,7 @@ elif nav == "Statistical Validation":
             st.plotly_chart(fig_roc, use_container_width=True)
 
     with col_r:
-        st.markdown('<div class="section-eyebrow">Calibration Curve — Brier Score Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-eyebrow">Calibration Curve: Brier Score Analysis</div>', unsafe_allow_html=True)
         if cal_df is not None:
             fig_cal = go.Figure()
             fig_cal.add_trace(go.Scatter(
@@ -2029,7 +2029,7 @@ elif nav == "Statistical Validation":
         st.markdown(f"""
         <div class="stat-highlight" style="margin-top:0;">
             <div class="stat-highlight-val">{rho:.4f}</div>
-            <div class="stat-highlight-label">Spearman rho — QS vs Confidence</div>
+            <div class="stat-highlight-label">Spearman rho: QS vs Confidence</div>
             <div style="height:1rem;"></div>
             <table class="stat-table">
                 <tr><td>p-value</td><td>{p_val:.4f}</td></tr>
@@ -2056,7 +2056,7 @@ elif nav == "Statistical Validation":
             <div class="stat-highlight-val" style="color:{'#4ADE80' if mc_sig else '#F87171'};">
                 {'Significant' if mc_sig else 'Not Sig.'}
             </div>
-            <div class="stat-highlight-label">High vs Medium Quality — Error Pattern</div>
+            <div class="stat-highlight-label">High vs Medium Quality: Error Pattern</div>
             <div style="height:1rem;"></div>
             <table class="stat-table">
                 <tr><td>p-value</td><td>{mc_p:.4f}</td></tr>
@@ -2066,7 +2066,7 @@ elif nav == "Statistical Validation":
             </table>
             <div style="height:0.75rem;"></div>
             <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#444; line-height:1.6;">
-                {'Error pattern berbeda signifikan antar quality tier — kualitas gambar terbukti mempengaruhi akurasi model.' if mc_sig else 'Tidak ada perbedaan signifikan.'}
+                {'Error pattern berbeda signifikan antar quality tier, kualitas gambar terbukti mempengaruhi akurasi model.' if mc_sig else 'Tidak ada perbedaan signifikan.'}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -2158,7 +2158,7 @@ elif nav == "Error Analysis":
         st.markdown(f"""
         <div style="font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:#555; line-height:1.8; margin-top:0.5rem;">
             {fn_flag:.1f}% kasus False Negative (glaukoma yang terlewat) memiliki uncertainty >= 0.20
-            dan dapat diflag secara otomatis untuk review manual dokter — mengurangi risiko klinis
+            dan dapat diflag secara otomatis untuk review manual dokter, mengurangi risiko klinis
             tanpa menambah beban kerja berlebihan pada kasus yang sudah yakin.
         </div>
         """, unsafe_allow_html=True)
@@ -2189,7 +2189,7 @@ elif nav == "Error Analysis":
         st.markdown(f"""
         <div class="stat-highlight" style="border-left: 3px solid #F87171;">
             <div style="font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; color:#F87171; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.75rem;">
-                False Negative — n={fn}
+                False Negative (n={fn})
             </div>
             <table class="stat-table">
                 <tr><td>Proporsi dari test set</td><td>{fn/total*100:.1f}%</td></tr>
@@ -2209,7 +2209,7 @@ elif nav == "Error Analysis":
         st.markdown(f"""
         <div class="stat-highlight" style="border-left: 3px solid #FACC15;">
             <div style="font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; color:#FACC15; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.75rem;">
-                False Positive — n={fp}
+                False Positive (n={fp})
             </div>
             <table class="stat-table">
                 <tr><td>Proporsi dari test set</td><td>{fp/total*100:.1f}%</td></tr>
@@ -2228,7 +2228,7 @@ elif nav == "Error Analysis":
     st.markdown("<div style='height:1rem;'></div>", unsafe_allow_html=True)
     grad_path = "glaucostat_artifacts/gradcam_results.png"
     if os.path.exists(grad_path):
-        st.markdown('<div class="section-eyebrow">Grad-CAM Visualization — Sample Cases</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-eyebrow">Grad-CAM Visualization: Sample Cases</div>', unsafe_allow_html=True)
         st.image(grad_path, use_container_width=True)
 
 
@@ -2273,9 +2273,9 @@ elif nav == "About":
             ("Quality Gate & Stratification",
              "Filter gambar QS < 3.0 menggunakan FundusQ-Net score. Stratifikasi ke tier Medium (3-5) dan High (>5) untuk analisis statistik berbasis kualitas."),
             ("Patient-Level Split",
-             "Stratified split 80:20 berbasis Patient ID — satu pasien tidak muncul di train dan test sekaligus. Mencegah data leakage yang umum diabaikan penelitian lain."),
+             "Stratified split 80:20 berbasis Patient ID, satu pasien tidak muncul di train dan test sekaligus. Mencegah data leakage yang umum diabaikan penelitian lain."),
             ("Quality-Aware Multimodal Transfer Learning",
-             "EfficientNetB0 pretrained ImageNet + Quality Score sebagai scalar input. Keduanya di-fuse di fully connected layer — model belajar menyesuaikan confidence berdasarkan kualitas gambar."),
+             "EfficientNetB0 pretrained ImageNet + Quality Score sebagai scalar input. Keduanya di-fuse di fully connected layer, model belajar menyesuaikan confidence berdasarkan kualitas gambar."),
             ("Monte Carlo Dropout",
              "30 iterasi inference dengan dropout aktif untuk epistemic uncertainty estimation. Flag otomatis kasus berisiko tinggi untuk review manual dokter."),
             ("Comprehensive Statistical Validation",
