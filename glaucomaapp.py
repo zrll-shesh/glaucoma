@@ -1588,7 +1588,7 @@ def get_quality_info(qs):
 
 
 # ── QUICK TEST SAMPLE DEFINITIONS ────────────────────────────────
-# Metadata untuk 3 sample image yang sudah ada di root repo
+# Metadata untuk sample image yang sudah ada di root repo
 SAMPLE_IMAGES = [
     {
         "id":       "sample_a",
@@ -1605,14 +1605,6 @@ SAMPLE_IMAGES = [
         "tag":      "GON- (Normal)",
         "desc":     "Optic disc normal",
         "qs_hint":  6.0,
-    },
-    {
-        "id":       "sample_c",
-        "path":     "18beb080-8102-11eb-9f26-9b97774ce0e6.jpg",
-        "label":    "Sample C",
-        "tag":      "GON+ (Glaukoma)",
-        "desc":     "Notching inferior, pallor",
-        "qs_hint":  5.8,
     },
 ]
 
@@ -1693,10 +1685,10 @@ if nav == "Detection":
         st.stop()
 
     # ── Quick Test Panel ──────────────────────────────────────────
-    st.markdown('<div class="section-eyebrow">Quick Test — Sample Images</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-eyebrow">Quick Test Sample Images</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="quicktest-banner">
-        ⚡ Gunakan salah satu dari 3 sample fundus di bawah untuk demo instan — tidak perlu upload file.
+        Gunakan salah satu dari 2 sample fundus di bawah untuk demo instan, tidak perlu upload file.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1712,7 +1704,7 @@ if nav == "Detection":
         for col, smp in zip(btn_cols, SAMPLE_IMAGES):
             with col:
                 file_ok = os.path.exists(smp["path"])
-                btn_label = f"{'✓ ' if st.session_state.selected_sample == smp['id'] else ''}{smp['label']}"
+                btn_label = f"{'[active] ' if st.session_state.selected_sample == smp['id'] else ''}{smp['label']}"
                 if st.button(
                     btn_label,
                     key=f"btn_{smp['id']}",
@@ -1750,14 +1742,14 @@ if nav == "Detection":
                     </div>
                     <div style="font-family:'JetBrains Mono',monospace; font-size:0.55rem;
                                 color:#2A2A2A; margin-top:0.3rem;">
-                        QS hint: {smp['qs_hint']} · {'✓ ready' if file_ok else '✗ file missing'}
+                        QS hint: {smp['qs_hint']} · {'ready' if file_ok else 'file missing'}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <div class="warning-box">
-            File sample (0_0.jpg, 219_0.jpg, 18beb080-....jpg) tidak ditemukan di direktori.
+            File sample (0_0.jpg, 219_0.jpg) tidak ditemukan di direktori.
             Pastikan file sudah ada di root folder yang sama dengan glaucomaapp.py.
         </div>
         """, unsafe_allow_html=True)
